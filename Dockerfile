@@ -6,4 +6,4 @@ RUN chmod +x /sync_data.sh
 ENV PORT=3000
 EXPOSE 3000
 
-CMD ["/bin/bash", "-c", "/sync_data.sh & ./start.sh"]
+CMD ["/bin/bash", "-c", "/sync_data.sh & /app/backend/start.sh"]
