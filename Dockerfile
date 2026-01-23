@@ -1,8 +1,9 @@
 FROM ghcr.io/open-webui/open-webui:latest
 
-COPY sync_data.sh sync_data.sh
+COPY sync_data.sh /sync_data.sh
+RUN chmod +x /sync_data.sh
 
-RUN chmod -R 777 ./data && \
-    chmod -R 777 ./open_webui && \
-    sed -i "1r sync_data.sh" ./start.sh  
+ENV PORT=3000
+EXPOSE 3000
 
+CMD ["/bin/bash", "-c", "/sync_data.sh & python3 -m open_webui --host 0.0.0.0 --port $PORT"]
