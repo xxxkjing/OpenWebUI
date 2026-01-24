@@ -1,11 +1,18 @@
 FROM ghcr.io/open-webui/open-webui:main
 
-RUN apt-get update && apt-get install -y python3 python3-pip
-RUN pip3 install --no-cache-dir huggingface_hub
+LABEL "language"="python"
+LABEL "framework"="open-webui"
 
-COPY sync_data.sh sync_data.sh
+WORKDIR /app
 
-RUN chmod -R 777 ./data && \
-    chmod -R 777 /app/backend/open_webui/static && \
-    chmod +x sync_data.sh && \
-    sed -i "1r sync_data.sh" ./start.sh
+COPY sync_data.sh /app/sync_data.sh
+
+RUN chmod +x /app/sync_data.sh && \
+    chmod -R 777 /app/data && \
+    chmod -R 777 /app/open_webui && \
+    sed -i "1r /app/sync_data.sh" /app/start.sh && \
+    chmod +x /app/start.sh
+
+EXPOSE 3000
+
+CMD ["/app/start.sh"]
