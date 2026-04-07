@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: open-webui-render
+    env: docker
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: WEBDAV_URL
+        sync: false
+      - key: WEBDAV_USERNAME
+        sync: false
+      - key: WEBDAV_PASSWORD
+        sync: false
+      - key: G_NAME
+        sync: false
+      - key: G_TOKEN
+        sync: false
+      - key: TZ
+        value: Asia/Shanghai
