@@ -1,7 +1,6 @@
 #!/bin/bash
 
-DATA_DIR="${DATA_DIR:-/app/backend/data}"
-mkdir -p "$DATA_DIR"
+mkdir -p ./data
 
 # 生成校验和文件
 generate_sum() {
@@ -13,20 +12,20 @@ generate_sum() {
 # 优先从WebDAV恢复数据
 if [ ! -z "$WEBDAV_URL" ] && [ ! -z "$WEBDAV_USERNAME" ] && [ ! -z "$WEBDAV_PASSWORD" ]; then
     echo "尝试从WebDAV恢复数据..."
-    curl -L --fail --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/webui.db" -o "$DATA_DIR/webui.db" && {
+    curl -L --fail --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/webui.db" -o "./data/webui.db" && {
         echo "从WebDAV恢复数据成功"
     } || {
         if [ ! -z "$G_NAME" ] && [ ! -z "$G_TOKEN" ]; then
             echo "从WebDAV恢复失败,尝试从GitHub恢复..."
             REPO_URL="https://${G_TOKEN}@github.com/${G_NAME}.git"
-            git clone "$REPO_URL" $DATA_DIR/temp && {
-                if [ -f $DATA_DIR/temp/webui.db ]; then
-                    mv $DATA_DIR/temp/webui.db $DATA_DIR/webui.db
+            git clone "$REPO_URL" ./data/temp && {
+                if [ -f ./data/temp/webui.db ]; then
+                    mv ./data/temp/webui.db ./data/webui.db
                     echo "从GitHub仓库恢复成功"
-                    rm -rf $DATA_DIR/temp
+                    rm -rf ./data/temp
                 else
                     echo "GitHub仓库中未找到webui.db"
-                    rm -rf $DATA_DIR/temp
+                    rm -rf ./data/temp
                 fi
             }
         else
@@ -43,21 +42,21 @@ sync_data() {
         echo "开始同步..."
         HOUR=$(date +%H)
         
-        if [ -f "$DATA_DIR/webui.db" ]; then
+        if [ -f "./data/webui.db" ]; then
             # 生成新的校验和文件
-            generate_sum "$DATA_DIR/webui.db" "$DATA_DIR/webui.db.sha256.new"
+            generate_sum "./data/webui.db" "./data/webui.db.sha256.new"
             
             # 检查文件是否变化
-            if [ ! -f "$DATA_DIR/webui.db.sha256" ] || ! cmp -s "$DATA_DIR/webui.db.sha256.new" "$DATA_DIR/webui.db.sha256"; then
+            if [ ! -f "./data/webui.db.sha256" ] || ! cmp -s "./data/webui.db.sha256.new" "./data/webui.db.sha256"; then
                 echo "检测到文件变化，开始同步..."
-                mv "$DATA_DIR/webui.db.sha256.new" "$DATA_DIR/webui.db.sha256"
+                mv "./data/webui.db.sha256.new" "./data/webui.db.sha256"
                 
                 # 同步到WebDAV
                 if [ ! -z "$WEBDAV_URL" ] && [ ! -z "$WEBDAV_USERNAME" ] && [ ! -z "$WEBDAV_PASSWORD" ]; then
                     echo "同步到WebDAV..."
                     
                     # 上传数据文件
-                    curl -L -T "$DATA_DIR/webui.db" --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/webui.db" && {
+                    curl -L -T "./data/webui.db" --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/webui.db" && {
                         echo "WebDAV更新成功"
                         
                         # 每日备份(包括WebDAV和GitHub)，在每天0点进行
@@ -69,20 +68,20 @@ sync_data() {
                             FILENAME_DAILY="webui_${YESTERDAY}.db"
                             
                             # WebDAV每日备份
-                            curl -L -T "$DATA_DIR/webui.db" --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/$FILENAME_DAILY" && {
+                            curl -L -T "./data/webui.db" --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/$FILENAME_DAILY" && {
                                 echo "WebDAV日期备份成功: $FILENAME_DAILY"
                                 
                                 # GitHub每日备份
                                 if [ ! -z "$G_NAME" ] && [ ! -z "$G_TOKEN" ]; then
                                     echo "开始GitHub每日备份..."
                                     REPO_URL="https://${G_TOKEN}@github.com/${G_NAME}.git"
-                                    git clone "$REPO_URL" $DATA_DIR/temp || {
+                                    git clone "$REPO_URL" ./data/temp || {
                                         echo "GitHub克隆失败"
-                                        rm -rf $DATA_DIR/temp
+                                        rm -rf ./data/temp
                                     }
                                     
-                                    if [ -d "$DATA_DIR/temp" ]; then
-                                        cd $DATA_DIR/temp
+                                    if [ -d "./data/temp" ]; then
+                                        cd ./data/temp
                                         git config user.name "AutoSync Bot"
                                         git config user.email "autosync@bot.com"
                                         git checkout main || git checkout master
@@ -98,7 +97,7 @@ sync_data() {
                                             echo "GitHub: 无数据变化"
                                         fi
                                         cd ../..
-                                        rm -rf $DATA_DIR/temp
+                                        rm -rf ./data/temp
                                     fi
                                 fi
                             } || echo "WebDAV日期备份失败"
@@ -106,14 +105,14 @@ sync_data() {
                     } || {
                         echo "WebDAV上传失败,重试..."
                         sleep 10
-                        curl -L -T "$DATA_DIR/webui.db" --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/webui.db" || {
+                        curl -L -T "./data/webui.db" --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/webui.db" || {
                             echo "WebDAV重试失败"
                         }
                     }
                 fi
             else
                 echo "文件未发生变化，跳过同步"
-                rm -f "$DATA_DIR/webui.db.sha256.new"
+                rm -f "./data/webui.db.sha256.new"
             fi
         else
             echo "未找到webui.db,跳过同步"
