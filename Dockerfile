@@ -1,7 +1,12 @@
-# 移除之前的 sed 注入逻辑
+FROM ghcr.io/open-webui/open-webui:main
+
+# 复制同步脚本
+COPY sync_data.sh /app/sync_data.sh
+
+# 仅设置权限，移除 sed 注入逻辑
 RUN chmod -R 777 ./data && \
     chmod -R 777 ./open_webui && \
-    chmod +x sync_data.sh
+    chmod +x /app/sync_data.sh
 
-# 修改启动命令：先后台运行同步脚本，再启动主程序
-CMD ["/bin/sh", "-c", "./sync_data.sh & ./start.sh"]
+# 使用后台运行符 & 确保同步脚本不阻塞主程序
+CMD ["/bin/sh", "-c", "/app/sync_data.sh & ./start.sh"]
