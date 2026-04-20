@@ -13,7 +13,7 @@ generate_sum() {
 if [ ! -z "$WEBDAV_URL" ] && [ ! -z "$WEBDAV_USERNAME" ] && [ ! -z "$WEBDAV_PASSWORD" ]; then
     echo "尝试从WebDAV恢复数据 (限时60秒)..."
     # 增加超时参数防止阻塞启动 [1]
-    curl -L --fail --connect-timeout 15 --max-time 60 --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/webui.db" -o "./data/webui.db" && {
+    curl -L --fail --connect-timeout 15 --max-time 300 --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" "$WEBDAV_URL/webui.db" -o "./data/webui.db" && {
         echo "从WebDAV恢复数据成功"
     } || {
         if [ ! -z "$G_NAME" ] && [ ! -z "$G_TOKEN" ]; then
